@@ -2,36 +2,781 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mon Site GitHub Pages</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      background: #f4f4f4;
-      color: #333;
-      text-align: center;
-    }
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CHIP-8 Emulator in Rust</title>
+  <link rel="stylesheet" href="index.css" />
+    <!-- Prism CSS (choix du thème possible) -->
+  <link href="https://cdn.jsdelivr.net/npm/prismjs/themes/prism.min.css" rel="stylesheet" />
 
-    h1 {
-      color: #007acc;
-    }
+  <!-- Prism JS -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/prism.min.js"></script>
 
-    a {
-      color: #007acc;
-      text-decoration: none;
-    }
-
-    a:hover {
-      text-decoration: underline;
-    }
-  </style>
+  <!-- Langages supportés (ex : Rust, Bash, etc.) -->
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-rust.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-bash.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/prismjs/components/prism-toml.min.js"></script>
 </head>
 <body>
-  <h1>Bienvenue sur mon site GitHub Pages 🚀</h1>
-  <p>Ceci est une page HTML hébergée gratuitement via GitHub.</p>
-  <p>
-    <a href="https://github.com/ton-nom-utilisateur">Voir mon GitHub</a>
-  </p>
+
+<header>
+  <h1>CHIP-8 Emulator in Rust</h1>
+  <p>Un émulateur CHIP-8 pédagogique écrit en Rust</p>
+</header>
+
+<div class="layout">
+  <nav class="sidebar">
+    <h3>Sommaire</h3>
+    <ul>
+      <li><a href="#fonctionnalites">Fonctionnalités</a></li>
+      <li><a href="#lancer">Lancer l'émulateur</a></li>
+      <li>
+        <a href="#etapes">Étapes de construction</a>
+        <ul>
+          <li><a href="#comprendre-systeme">1. Comprendre le système CHIP-8</a></li>
+          <li>
+            <a href="#mise-en-place">2. Mise en place du projet Rust</a>
+            <ul>
+              <li><a href="#initialiser-projet">2.1 Initialiser le projet</a></li>
+              <li><a href="#architecture-projet">2.2 Organiser l’architecture</a></li>
+              <li><a href="#ajouter-dependances">2.3 Ajouter les dépendances</a></li>
+            </ul>
+          </li>
+          <li>
+            <a href="#logique-chip8">3. Logique de la machine virtuelle</a>
+            <ul>
+              <li><a href="#structure-chip8">3.1 Structure du Chip8</a></li>
+              <li><a href="#charger-rom">3.2 Charger une ROM</a></li>
+              <li><a href="#premier-test">3.3 Notre premier test</a></li>
+              <li><a href="#cycle-exec">3.4 Lire, décoder et exécuter</a></li>
+              <ul>
+                 <li><a href="#cycle">Methode cycle()</a></li>
+                <li><a href="#exec">Methode exec()</a></li>
+              </ul>
+              <li><a href="#ibm">3.5 Notre premier Programme</a></li>
+            </ul>
+          </li>
+        </ul>
+      </li>
+      <li><a href="#cpu">Boucle CPU</a></li>
+    </ul>
+  </nav>
+
+
+  <main class="content">
+    <h2 id="fonctionnalites">Fonctionnalités</h2>
+    <p>
+    Cette page présente un projet d’émulateur CHIP-8 réalisé en Rust. C’est un excellent exercice pour comprendre les bases de l’émulation, 
+    en construisant soi-même un émulateur simple de A à Z. Le projet est conçu pour être éducatif et progressif, avec un code clair et structuré.
+     Il est recommandé d’avoir quelques bases en programmation, ainsi qu’une connaissance minimale de Rust pour en tirer le meilleur parti.
+    </p>
+
+
+    <ul class="features">
+      <li><img src="./icons/project/hard.svg" alt="disk" /><p>Chargement de ROM .ch8</p></li>
+      <li><img src="./icons/chip8-features/screen.svg" alt="screen" /></span><p>64×32   pixels scaling</p></li>
+      <li><img src="./icons/project/keyboard.svg" alt="keyboard" /><p>clavier configurable</p></li>
+      <li><img src="./icons/project/bug.svg" alt="bug" /><p>Outils de debug</p></li>
+      <li><img src="./icons/project/cpu.svg" alt="cpu" /><p>CPU à ~600Hz  Timers à 60Hz</p></li>
+    </ul>
+
+    <h2 id="lancer">Lancer l'émulateur</h2>
+    <p>Instructions pour lancer l'émulateur...</p>
+
+    <section class="chip8-section">
+      <h2 id="etapes">Étapes de construction</h2>
+      <h3>1. Comprendre le système CHIP-8</h3>
+      <p>
+        Le <strong>CHIP-8</strong> est une machine virtuelle très simple, créée dans les années 1970 pour faciliter la programmation de jeux sur des ordinateurs très limités, comme le COSMAC VIP ou le Telmac 1800.
+        Il se compose de quelques éléments clés :
+      </p>
+      <ul class="chip8-features">
+        <li class="flip-card">
+          <div class="flip-inner">
+            <div class="flip-front">
+              <span class="chip8-icon">
+                <img src="./icons/chip8-features/memory.svg" alt="Mémoire" />
+              </span>
+              4K de mémoire
+            </div>
+            <div class="flip-back">
+              Cette mémoire sert à stocker les programmes et données.
+            </div>
+          </div>
+        </li>
+
+        <li class="flip-card">
+          <div class="flip-inner">
+            <div class="flip-front">
+              <span class="chip8-icon">
+                <img src="./icons/chip8-features/registers.svg" alt="Registres" />
+              </span>
+              16 registres 
+            </div>
+            <div class="flip-back">
+              16 petits registres généraux pour stocker des données temporaires.
+            </div>
+          </div>
+        </li>
+
+        <li class="flip-card">
+          <div class="flip-inner">
+            <div class="flip-front">
+              <span class="chip8-icon">
+                <img src="./icons/chip8-features/pin.svg" alt="Registre I" />
+              </span>
+              Registre I
+            </div>
+            <div class="flip-back">
+              Registre spécial pour les adresses mémoire.
+            </div>
+          </div>
+        </li>
+
+        <li class="flip-card">
+          <div class="flip-inner">
+            <div class="flip-front">
+              <span class="chip8-icon">
+                <img src="./icons/chip8-features/timer.svg" alt="Timers" />
+              </span>
+              2 timers
+            </div>
+            <div class="flip-back">
+              Deux compteurs 60 Hz, un pour le délai et un pour le son.
+            </div>
+          </div>
+        </li>
+
+        <li class="flip-card">
+          <div class="flip-inner">
+            <div class="flip-front">
+              <span class="chip8-icon">
+                <img src="./icons/chip8-features/stack.svg" alt="Pile d'appels" />
+              </span>
+              Pile d'appels
+            </div>
+            <div class="flip-back">
+              Permet de gérer les appels et retours de sous-programmes.
+            </div>
+          </div>
+        </li>
+
+        <li class="flip-card">
+          <div class="flip-inner">
+            <div class="flip-front">
+              <span class="chip8-icon">
+                <img src="./icons/chip8-features/screen.svg" alt="Affichage" />
+              </span>
+              Affichage 64x32 pixels
+            </div>
+            <div class="flip-back">
+              Un écran monochrome avec une résolution de 64x32 pixels.
+            </div>
+          </div>
+        </li>
+
+        <li class="flip-card">
+          <div class="flip-inner">
+            <div class="flip-front">
+              <span class="chip8-icon">
+                <img src="./icons/chip8-features/instructions.svg" alt="Instructions" />
+              </span>
+              35 instructions
+            </div>
+            <div class="flip-back">
+              Un petit ensemble d'instructions pour programmer les jeux.
+            </div>
+          </div>
+        </li>
+      </ul>
+      <p>
+        Grâce à cette simplicité, le CHIP-8 est un excellent point de départ pour apprendre les bases de l’émulation.
+      </p>
+    </section>
+
+    <h3>2. Mise en place du projet Rust</h3>
+      <h4 id="initialiser-projet" >2.1 Initialiser le projet</h4>
+        <pre><code class="language-bash">
+          cargo new chip8
+          cd chip8
+        </code></pre>
+
+      <h4 id="architecture-projet">2.2 Organiser l’architecture du projet</h4>
+        <p>Voici à quoi devrait ressembler l'architecture finale du prjet :</p>
+        <pre><code class="language-plaintext">
+          chip8/
+          ├── Cargo.toml
+          ├── src/
+          │   ├── main.rs          # Point d'entrée de l'émulateur
+          │   ├── chip8.rs         # Logique de la machine virtuelle CHIP-8
+          │   ├── display.rs       # Affichage à l'écran avec minifb
+          │   ├── input.rs         # Gestion du clavier
+          │   └── debugger.rs      # Affichage des registres/debug info
+          └── roms/
+              └── Space Invaders.ch8
+      </code></pre>
+
+      <h4 id="ajouter-dependances" >2.3 Ajouter les dépendances</h4>
+        <p>Avant de compiler le projet, ajoutez les dépendances suivantes dans votre fichier <code>Cargo.toml</code> :</p>
+        <pre><code class="language-toml">
+          [dependencies]
+          minifb = "0.28"
+          rand = "0.8"
+        </code></pre>
+
+      <section>
+        <h3 id="logique-chip8" >3. Logique de la machine virtuelle</h3>
+          <h4 id="structure-chip8" >3.1 structure du Chip8</span></h4>
+
+          <p>
+            Pour commencer à concevoir notre émulateur, il faut d’abord <strong>définir sa structure</strong>. Rappelons que la machine CHIP-8 est composée de plusieurs éléments essentiels :
+          </p>
+
+          <ul class="struct-list">
+            <li><strong>4K de mémoire</strong> : Une mémoire principale de 4096 octets.</li>
+            <li><strong>16 registres généraux</strong> : Seize registres (<code>V0</code> à <code>VF</code>), chacun stockant un octet (8 bits).</li>
+            <li><strong>Un registre d’index</strong> : Un registre 16 bits qui stocke une adresse mémoire</li>
+            <li><strong>Un compteur de programme</strong> :<br>Pointeur 16 bits qui indique l’adresse mémoire de l’instruction en cours d’exécution.</li>
+            <li><strong>Deux timers 8 bits</strong> (<code>delay_timer</code> et <code>sound_timer</code>)<br>
+              Ces compteurs diminuent à une fréquence de 60 Hz et sont utilisés pour gérer les délais et les sons.
+            </li>
+            <li><strong>Une pile pour les appels de sous-programmes</strong><br>
+              La pile contient jusqu’à 16 adresses (16 bits chacune) permettant de gérer les appels et retours de fonctions.
+            </li>
+            <li><strong>Un affichage monochrome 64×32 pixels</strong><br>
+              Un tableau de 2048 pixels où chaque pixel est soit allumé (<code>1</code>), soit éteint (<code>0</code>).
+            </li>
+            <li><strong>Un clavier virtuel à 16 touches</strong><br>
+              Un tableau de 16 booléens pour représenter l’état (appuyé ou non) de chaque touche.
+            </li>
+          </ul>
+
+          <details>
+            <summary>Essayez d'abord de coder ca vous même</summary>
+            <pre><code class="language-rust">
+              pub struct Chip8 {
+                  pub memory: [u8; 4096],          // 4K de mémoire
+                  pub v: [u8; 16],                 // 16 registres V0 à VF
+                  pub i: u16,                      // Registre d'index
+                  pub pc: u16,                     // Compteur de programme
+
+                  pub gfx: [u8; 64 * 32],          // Mémoire vidéo
+
+                  pub delay_timer: u8,             // Timer de délai
+                  pub sound_timer: u8,             // Timer de son
+
+                  pub stack: [u16; 16],            // Pile
+                  pub sp: u8,                      // Pointeur de pile
+
+                  pub keypad: [bool; 16],          // État des touches du clavier 
+              }
+            </code></pre>
+          </details>
+      </section>
+
+    <hr>
+
+    <section>
+    <h4 id="charger-rom" >3.2 Charger une ROM </span></h4>
+
+      <p>La mémoire CHIP-8 fait 4096 octets (4K), mais les premières adresses (de <code>0x000</code> à <code>0x1FF</code>) sont <strong>réservées au système</strong> : elles contiennent le programme d’interpréteur CHIP-8 original ou des polices (sprites) pour les chiffres.</p>
+
+      <div class="warning">
+        ⚠️ Le programme doit toujours être chargé à l’adresse <strong>0x200</strong> dans la mémoire CHIP-8.
+      </div>
+
+      <p>C’est une convention importante à respecter pour que l’émulateur fonctionne correctement et ne remplace pas ces données système.</p>
+
+      <Strong>Comment charger la ROM à 0x200 :</Strong>
+
+      <ol>
+        <li>Lire les octets du fichier ROM (le programme à exécuter).</li>
+        <li>Copier ces octets dans le tableau mémoire à partir de l’indice 0x200 (soit 512).</li>
+      </ol>
+
+      <div class="tip">
+        💡 Utilisez la méthode .copy_from_slice().  
+        Vous pouvez également vérifier que la mémoire est assez grande avant de copier.
+      </div>
+
+      <details>
+        <summary>En Rust, cela ressemble à ça :</summary>
+          <pre><code class="language-rust">
+            pub fn load_rom(&mut self, rom: &[u8]) {
+                let start = 0x200;
+                let end = start + rom.len();
+                if end > self.memory.len() {
+                    panic!("ROM is too large to fit in memory.");
+                }
+                self.memory[start..end].copy_from_slice(rom);
+            }
+          </code></pre>
+      </details>
+
+      <div class="warning">
+        ⚠️ N'oubliez pas que les méthodes <strong>impl</strong> (implémentent) le Chip8
+      </div>
+
+      <pre><code class="language-rust">
+          impl Chip8 {
+              // les methodes ici 
+          }
+      </code></pre>
+    </section>
+
+    <hr>
+
+    <section>
+      <h4 id="premier-test" >3.3 Notre premier test </span></h4>
+      <p>
+        Avant de commencer à tester notre programme, il faut d'abord ajouter un constructeur.  
+        En Rust, on utilise <code>pub fn new() -&gt; Self</code> pour créer une nouvelle instance avec des champs initialisés à 0.
+      </p>
+
+      <details>
+        <summary>Le constructeur en Rust :</summary>
+        <pre><code class="language-rust">pub fn new() -&gt; Self {
+          Self {
+              memory: [0; 4096],
+              v: [0; 16],
+              i: 0,
+              pc: 0,
+              gfx: [0; 64 * 32],
+              delay_timer: 0,
+              sound_timer: 0,
+              stack: [0; 16],
+              sp: 0,
+              keypad: [false; 16],
+          }
+      }</code></pre>
+      </details>
+
+      <p>
+        Ensuite, il faut ajouter un fichier <code>src/test.rs</code> et le déclarer dans le fichier <code>Cargo.toml</code> :
+      </p>
+
+      <pre><code class="language-toml"> 
+        [[bin]]
+        name = "test"
+        path = "src/test.rs"
+      </code></pre>
+
+      <p><em>→ Cela sert à déclarer des exécutables binaires personnalisés dans ton projet Rust.</em></p>
+
+      <p>Enfin, tu peux écrire ton test&nbsp;: déclare une ROM personnalisée et vérifie qu’elle est correctement lue et enregistrée en mémoire :</p>
+
+      <pre><code class="language-rust">
+        mod chip8;
+        use chip8::Chip8;
+
+        fn main() {
+            let mut chip8 = Chip8::new();
+
+            // ROM factice
+            let rom = vec![0x00, 0xE0, 0xA2, 0xF0];
+            chip8.load_rom(&rom);
+
+            // Vérifie que la mémoire a bien été remplie
+            assert_eq!(chip8.memory[0x200], 0x00);
+            assert_eq!(chip8.memory[0x201], 0xE0);
+            assert_eq!(chip8.memory[0x202], 0xA2);
+            assert_eq!(chip8.memory[0x203], 0xF0);
+
+            println!("ROM chargée correctement !");
+        }
+      </code></pre>
+
+      <p>Tu peux enfin exécuter ton programme avec :</p>
+
+      <pre><code class="language-bash"> 
+        cargo run --bin test
+      </code></pre>
+    </section>
+
+    <hr>
+
+    <section>
+      <h4 id="cycle-exec" >3.4 Lire, décoder et exécuter les instructions</h4>
+
+      <p>
+        L'un des composants fondamentaux de tout émulateur est <strong>la boucle d'exécution</strong> du processeur, aussi appelée <strong>boucle CPU</strong>.
+      </p>
+
+      <p>Son rôle est simple, mais crucial :</p>
+      <ol>
+        <li><strong>Lire</strong> l’instruction (appelée opcode) dans la mémoire à l’adresse actuelle du compteur de programme (<code>PC</code>)</li>
+        <li><strong>Décoder</strong> cette instruction pour déterminer de quelle commande il s’agit</li>
+        <li><strong>Exécuter</strong> cette commande, ce qui affectera potentiellement les registres, la mémoire, l’affichage, etc.</li>
+      </ol>
+
+      <div class="tip">
+      💡 Pour le CHIP-8, chaque instruction fait exactement 2 octets. Ces deux octets sont lus ensemble pour former un opcode de 16 bits.
+      </div>
+
+      <p>Comprendre cette boucle est essentiel pour simuler le comportement du processeur CHIP-8. C’est elle qui donne vie à l’exécution des ROMs.</p>
+
+      <p>
+        Pour cette section, je vous recommande vivement de consulter la 
+        <a href="http://devernay.free.fr/hacks/chip8/C8TECH10.HTM#Dxyn" target="_blank" rel="noopener noreferrer">
+          Documentation officielle CHIP-8 - Devernay
+        </a> 
+        qui sera notre meilleur allié pour coder les 35 instructions du Chip-8.
+      </p>
+
+      <hr>
+
+      <p id="cycle"><strong>Méthode <code>cycle()</code> :</strong></p>
+      <ol>
+        <li><strong>Lit</strong> les deux octets pointés par <code>pc</code> et <code>pc + 1</code></li>
+        <li><strong>Combine</strong> ces octets afin d’obtenir l’opcode 16 bits :</li>
+        <li><strong>Incrémente</strong> <code>pc</code> de <code>2</code> (chaque instruction occupe 2 octets)</li>
+        <li><strong>Appelle</strong> ensuite <code>self.exec(opcode)</code> pour exécuter l’instruction</li>
+      </ol>
+
+      <details>
+        <summary>En Rust, ça donne ça :</summary>
+        <pre><code class="language-rust">
+          pub fn cycle(&mut self) {
+            // 1. Lire les deux octets en mémoire
+            let high = self.memory[self.pc as usize] as u16;
+            let low  = self.memory[(self.pc + 1) as usize] as u16;
+
+            // 2. Combiner pour obtenir l'opcode
+            let opcode = (high &lt;&lt; 8) | low;
+
+            // 3. Avancer le compteur de programme
+            self.pc += 2;
+
+            // 4. Exécuter l'opcode
+            self.exec(opcode);
+          }
+        </code></pre>
+      </details>
+
+      <div class="tip">
+      💡 Vous pouvez modifier votre test :
+      </div>
+
+      <pre><code class="language-rust">
+        // src/test.rs (ajoutez ça après chip8.load_rom())
+        for i in 0..4 {
+            println!("--- Cycle {} ---", i + 1);
+            chip8.cycle();
+        }
+
+        // src/chip8.rs (n'oubliez pas de définir exec)
+        pub fn exec(&mut self, opcode: u16) {
+            println!("Opcode exécuté : {:#06X}", opcode);
+        }
+      </code></pre>
+    </section>
+
+    <hr>
+
+    <section>
+      <p id="exec"><strong>Méthode <code>exec()</code> :</strong></p>
+      
+      <p>
+        Bien, maintenant que nous avons la structure en place, il est temps de rentrer dans le cœur de l’émulation :
+        il va falloir simuler les instructions CPU, c’est-à-dire implémenter le comportement de chaque opcode.
+        La méthode <code>exec()</code> est responsable de <strong>décoder un opcode</strong> et 
+        <strong>d’exécuter l’action correspondante</strong>. Chaque opcode dans CHIP-8 est codé sur 2 octets (16 bits), 
+        et son motif binaire nous permet d'en identifier la "famille".
+      </p>
+
+      <table>
+        <thead>
+          <tr><th>Opcode</th><th>Description</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><code>0x00E0</code></td><td>Effacer l’écran (CLS)</td></tr>
+          <tr><td><code>0x1NNN</code></td><td>Saut à l’adresse <code>NNN</code></td></tr>
+          <tr><td><code>0x6XNN</code></td><td>Charger <code>NN</code> dans le registre <code>VX</code></td></tr>
+          <tr><td><code>0xANNN</code></td><td>Affecter <code>NNN</code> au registre <code>I</code></td></tr>
+        </tbody>
+      </table>
+
+      <p>👉 Il y a <strong>35 instructions</strong> au total à supporter dans l’émulateur.</p>
+
+      <hr>
+
+      <p>
+        Avant de coder les instructions, il est important de comprendre une particularité propre au <strong>CHIP-8</strong> :
+      </p>
+        Contrairement aux CPU classiques (comme x86 ou ARM), <strong>chaque instruction dans CHIP-8 est un seul mot de 16 bits (2 octets)</strong> 
+        qui encode à la fois :
+        <ul>
+          <li>L’<strong>opération</strong> (opcode)</li>
+          <li>Les <strong>registres impliqués</strong></li>
+          <li>Et parfois les <strong>valeurs immédiates</strong> (constantes)</li>
+        </ul>
+
+      <div class="example">
+        L’instruction 6XNN signifie : LD Vx, NN, soit "charger la valeur NN dans le registre VX".  
+      </div>
+
+      <p>
+        À l’inverse, sur un CPU plus moderne, on aurait :
+        <ul>
+          <li>un octet pour l’opcode (<code>LD</code>)</li>
+          <li>un octet pour le registre (<code>VX</code>)</li>
+          <li>un ou plusieurs octets pour la valeur (<code>NN</code>)</li>
+        </ul>
+        Cela simplifie beaucoup le décodeur d’instruction de notre émulateur.
+      </p>
+
+      <hr>
+
+      <h4>Comment l’implémenter ?</h4>
+      <p>Pour écrire la méthode <code>exec</code>, on utilise une structure <code>match</code> en Rust appliquée à l’opcode ou à certaines parties extraites de celui‑ci :</p>
+
+      <ol>
+        <li><strong>Commencez</strong> par un <code>match</code> sur les 4 bits de poids fort (<code>opcode &amp; 0xF000</code>) pour distinguer les grandes familles d’instructions.</li>
+        <li>Pour les familles qui regroupent plusieurs sous‑opcodes (par exemple <code>0x8000</code>), ajoutez un second <code>match</code> sur la partie basse (<code>opcode &amp; 0x000F</code>).</li>
+        <li><strong>Implémentez ensuite le comportement</strong> spécifique à chaque opcode.</li>
+      </ol>
+
+      <div class="warning">
+        ⚠️ Je vous conseille de commencer par les instructions <code>00E0</code>, <code>1NNN</code>, <code>6XNN</code>, 
+        <code>7XNN</code>, <code>ANNN</code>, <code>DXYN</code> 
+      </div>
+
+
+      <details>
+        <summary>Voici un code si vous ne savez pas par où commencer. Le reste se trouve sur le git du projet</summary>
+        <pre><code class="language-rust">
+          pub fn exec(&mut self, opcode: u16) {
+              match opcode & 0xF000 {
+                  0x0000 => match opcode & 0x00FF {
+                      0x00E0 => {
+                          // CLS: clear screen
+                          self.gfx = [0; 64 * 32];
+                      }
+                      0x00EE => {
+                          // TODO
+                      _ => println!("Instruction non supportée : {opcode:04X}"),
+                      },
+                  }
+                  0x1000 => {
+                      // JP addr
+                      self.pc = opcode & 0x0FFF;
+                  }
+                  0x6000 => {
+                      // LD Vx, nn
+                      let x = ((opcode & 0x0F00) >> 8) as usize; 
+                      let nn = (opcode & 0x00FF) as u8;          
+                      self.v[x] = nn;
+                  }
+                  // ... et ainsi de suite pour toutes les familles d'opcodes
+                  _ => {
+                      println!("Opcode inconnu : {opcode:04X}");
+                  }
+              }
+          }
+        </code></pre>
+      </details>
+      
+      <h4>Implémenter l’instruction <code>DXYN</code></h4>
+
+      <p>
+        L’instruction <code>DXYN</code> sert à dessiner un <strong>sprite</strong> (un petit dessin pixélisé) à l’écran :
+        <ol style="list-style-type: none;"">
+          <li>Le sprite est un groupe de <strong>N lignes</strong>, chaque ligne faisant <strong>8 pixels de large</strong>.</li>
+          <li>Chaque pixel est soit <strong>allumé (1)</strong>, soit <strong>éteint (0)</strong>.</li>
+          <li>Le sprite est dessiné à la position <code>(VX, VY)</code> sur l’écran.</li>
+          <li>L’écran du CHIP-8 fait <code>64 x 32</code> pixels.</li>
+          <li>Le dessin est fait avec une opération <strong>XOR</strong> entre le sprite et l’écran.</li>
+        </ol>
+      </p>
+
+
+      <h4>Implémentation :</h4>
+      <table>
+        <thead>
+          <tr><th>Étape</th><th>Quoi faire</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>Extraire X, Y, N de l’opcode</td></tr>
+          <tr><td>2</td><td>Lire les registres VX, VY</td></tr>
+          <tr><td>3</td><td>Réinitialiser VF</td></tr>
+          <tr><td>4</td><td>Lire N octets depuis l’adresse I</td></tr>
+          <tr><td>5</td><td>Décoder chaque bit (8 pixels par ligne)</td></tr>
+          <tr><td>6</td><td>Calculer la position écran avec wrap-around</td></tr>
+          <tr><td>7</td><td>Dessiner le pixel et gérer la collision avec XOR</td></tr>
+        </tbody>
+      </table>
+
+      <details>
+        <summary>Le code complet</summary>
+        <pre><code class="language-rust">
+          0xD000 => {
+              let x = ((opcode & 0x0F00) >> 8) as usize;
+              let y = ((opcode & 0x00F0) >> 4) as usize;
+              let n = (opcode & 0x000F) as usize;
+
+              let vx = self.v[x] as usize;
+              let vy = self.v[y] as usize;
+
+              self.v[0xF] = 0;
+
+              for row in 0..n {
+                  let sprite_byte = self.memory[(self.i + row as u16) as usize];
+
+                  for col in 0..8 {
+                      let sprite_pixel = (sprite_byte >> (7 - col)) & 1;
+
+                      if sprite_pixel == 1 {
+                          let x_coord = (vx + col) % 64;
+                          let y_coord = (vy + row) % 32;
+                          let idx = x_coord + y_coord * 64;
+
+                          if self.gfx[idx] == 1 {
+                              self.v[0xF] = 1;
+                          }
+
+                          self.gfx[idx] ^= 1;
+                      }
+                  }
+              }
+          }
+        </code></pre>
+        </details>
+
+        <details>
+          <summary>Comment CHIP-8 déplace les sprites</summary>
+          <p>
+            <strong>Pour déplacer un sprite à l’écran :</strong><br>
+            Il faut <strong>effacer</strong> l’ancien dessin du sprite à sa position précédente, puis 
+            <strong>dessiner</strong> le sprite à la nouvelle position.
+          </p>
+          <p>
+            <strong>Comment effacer un sprite ?</strong><br>
+            Redessiner un sprite à la même position 
+            <strong>efface</strong> le sprite (car <code>1 XOR 1 = 0</code>).
+          </p>
+        </details>
+    </section>
+
+    <section>
+      <h4 id="ibm"> 4. Notre premier programme </h4>
+
+      <p>
+        À ce stade il ne reste plus grand chose à coder pour lancer notre premier programme.
+        Le but de cette partie va être d'afficher le logo d'IBM programme IBM.ch8 : 
+      </p>
+
+      <div class="logo-container">
+        <img src="img/ibm.png" alt="Logo IBM">
+      </div>
+
+      <p>Voici les différentes étapes pour faire tourner notre programme :</p>
+
+      <ol>
+        <li>
+          <strong>Déclarer la structure <code>Chip8</code></strong><br>
+          Nous avons déjà écrit un constructeur, il suffit maintenant de l’utiliser.
+        </li>
+
+        <li>
+          <strong>Lire une ROM</strong><br>
+          Utilisez <code>std::fs::read</code> pour lire le fichier binaire de la ROM, puis chargez-le en mémoire (<code>load_rom</code>).
+        </li>
+
+        <li>
+          <strong>Créer une fenêtre avec <code>minifb</code></strong><br>
+          La bibliothèque <code>minifb</code> permet d’ouvrir une fenêtre graphique simple. Vous pouvez consulter la <a href="https://docs.rs/minifb/latest/minifb/struct.Window.html" target="_blank">documentation de minifb::Window</a> pour plus de détails sur son utilisation.
+        </li>
+
+        <li>
+          <strong>Créer un buffer pour la fenêtre</strong><br>
+          Utilisez un <code>Vec&lt;u32&gt;</code> de taille 64×32  pour stocker les pixels de l’affichage à chaque frame.
+        </li>
+
+        <li>
+          <strong>Boucle principale (<code>main loop</code>)</strong><br>
+          C’est le cœur de notre programme. À chaque itération :
+          <ul>
+            <li>Lire et exécuter une instruction avec la méthode <code>cycle</code></li>
+            <li>Mettre à jour le buffer à partir de l’état graphique interne (<code>gfx</code>)</li>
+            <li>Afficher le contenu du buffer dans la fenêtre via <code>update_with_buffer</code></li>
+          </ul>
+        </li>
+      </ol>
+
+      <p>
+        Vous avez désormais tous les éléments nécessaires pour implémenter correctement la fonction <code>main()</code>. Il vous faudra simplement réfléchir un peu à la manière de mettre à jour le buffer d'affichage.  
+        Pour cela, je vous conseille d’écrire une fonction dédiée, qui convertira l’état de l’écran CHIP-8 en pixels affichables.  
+        Voici sa signature&nbsp;:  
+        <code>fn draw_chip8_display(buffer: &mut [u32], display: &[u8; WIDTH * HEIGHT])</code>
+      </p>
+  
+       <details>
+        <summary>Le code complet</summary>
+        <pre><code class="language-rust">
+          mod chip8;
+          use chip8::Chip8;
+          use minifb::{Window, WindowOptions};
+
+          const WIDTH: usize = 64;
+          const HEIGHT: usize = 32;
+
+          fn draw_chip8_display(buffer: &mut [u32], display: &[u8; WIDTH * HEIGHT]) {
+              for y in 0..HEIGHT {
+                  for x in 0..WIDTH {
+                      let index = y * WIDTH + x;
+                      buffer[index] = if display[index] != 0 {
+                          0xFFFFFFFF // blanc
+                      } else {
+                          0x00000000 // noir
+                      };
+                  }
+              }
+          }
+
+          fn main() {
+              //Déclarer le chip8 grace au constructeur
+              let mut chip8 = Chip8::new();
+
+              //lire la rom IBM.ch8
+              let rom = std::fs::read("roms/IBM.ch8").expect("Failed to read ROM");
+              chip8.load_rom(&rom);
+
+
+              //Déclarer la fenetre avec minifb
+              let mut window = Window::new(
+                  "CHIP-8 Emulator",
+                  WIDTH,
+                  HEIGHT,
+                  WindowOptions::default(),
+              ).unwrap_or_else(|e| panic!("{}", e));
+
+              //Initialiser le buffer pour la fenêtre
+              let mut buffer: Vec<u32> = vec![0; WIDTH * HEIGHT];
+
+              // Loop qui tourne tant que la fenêtre est ouverte
+              while window.is_open() {
+                  chip8.cycle();
+                  draw_chip8_display(&mut buffer, &chip8.gfx);
+                  window.update_with_buffer(&buffer, WIDTH, HEIGHT).unwrap();
+              }
+          }
+        </code></pre>
+        </details>
+
+      <p>
+        Cette structure minimale nous permettra d’avoir un affichage fonctionnel (oui la fenetre est minuscule), que nous améliorerons ensuite en organisant mieux le projet, en séparant par exemple la logique d’affichage dans un module <code>display.rs</code>.
+      </p>
+    </section>
+
+    <hr>
+
+  </main>
+
+  
+</div>
+
+<footer>
+  Fait avec ❤️ en Rust - Dernière mise à jour : juillet 2025
+</footer>
+
 </body>
 </html>
